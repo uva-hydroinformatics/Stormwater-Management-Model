@@ -61,11 +61,11 @@ static int fileVersion;
 // Function declarations
 //-----------------------------------------------------------------------------
 static int  openHotstartFile1(void); 
-static int  openHotstartFile2(void);       
+static int  openHotstartFile2(TFile hsfile2);       
 static void readRunoff(void);
-static void saveRunoff(void);
+static void saveRunoff(TFile hsfile2);
 static void readRouting(void);
-static void saveRouting(void);
+static void saveRouting(TFile hsfile2);
 static int  readFloat(float *x, FILE* f);
 static int  readDouble(double* x, FILE* f);
 
@@ -75,7 +75,7 @@ int hotstart_open()
 {
     // --- open hot start files
     if ( !openHotstartFile1() ) return FALSE;       //input hot start file
-    if ( !openHotstartFile2() ) return FALSE;       //output hot start file
+    if ( !openHotstartFile2(Fhotstart2) ) return FALSE;       //output hot start file
 
     ////  Following lines removed. ////                                            //(5.1.005)
     //if ( Fhotstart1.file )
@@ -188,7 +188,7 @@ int openHotstartFile1()
 
 //=============================================================================
 
-int openHotstartFile2()
+int openHotstartFile2(TFile hsfile2)
 //
 //  Input:   none
 //  Output:  none
@@ -204,10 +204,10 @@ int openHotstartFile2()
     char  fileStamp[] = "SWMM5-HOTSTART4";                                     //(5.1.008)
 
     // --- try to open file
-    if ( Fhotstart2.mode != SAVE_FILE ) return TRUE;
-    if ( (Fhotstart2.file = fopen(Fhotstart2.name, "w+b")) == NULL)
+    if ( hsfile2.mode != SAVE_FILE ) return TRUE;
+    if ( (hsfile2.file = fopen(hsfile2.name, "w+b")) == NULL)
     {
-        report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, Fhotstart2.name);
+        report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, hsfile2.name);
         return FALSE;
     }
 
@@ -218,19 +218,19 @@ int openHotstartFile2()
     nLinks = Nobjects[LINK];
     nPollut = Nobjects[POLLUT];
     flowUnits = FlowUnits;
-    fwrite(fileStamp, sizeof(char), strlen(fileStamp), Fhotstart2.file);
-    fwrite(&nSubcatch, sizeof(int), 1, Fhotstart2.file);
-    fwrite(&nLandUses, sizeof(int), 1, Fhotstart2.file);
-    fwrite(&nNodes, sizeof(int), 1, Fhotstart2.file);
-    fwrite(&nLinks, sizeof(int), 1, Fhotstart2.file);
-    fwrite(&nPollut, sizeof(int), 1, Fhotstart2.file);
-    fwrite(&flowUnits, sizeof(int), 1, Fhotstart2.file);
+    fwrite(fileStamp, sizeof(char), strlen(fileStamp), hsfile2.file);
+    fwrite(&nSubcatch, sizeof(int), 1, hsfile2.file);
+    fwrite(&nLandUses, sizeof(int), 1, hsfile2.file);
+    fwrite(&nNodes, sizeof(int), 1, hsfile2.file);
+    fwrite(&nLinks, sizeof(int), 1, hsfile2.file);
+    fwrite(&nPollut, sizeof(int), 1, hsfile2.file);
+    fwrite(&flowUnits, sizeof(int), 1, hsfile2.file);
     return TRUE;
 }
 
 //=============================================================================
 
-void  saveRouting()
+void  saveRouting(TFile hsfile2)
 //
 //  Input:   none
 //  Output:  none
@@ -244,21 +244,21 @@ void  saveRouting()
     {
         x[0] = (float)Node[i].newDepth;
         x[1] = (float)Node[i].newLatFlow;
-        fwrite(x, sizeof(float), 2, Fhotstart2.file);
+        fwrite(x, sizeof(float), 2, hsfile2.file);
 
 ////  New code added to release 5.1.008.  ////                                 //(5.1.008)
         if ( Node[i].type == STORAGE )
         {
             j = Node[i].subIndex;
             x[0] = (float)Storage[j].hrt;
-            fwrite(&x[0], sizeof(float), 1, Fhotstart2.file);
+            fwrite(&x[0], sizeof(float), 1, hsfile2.file);
         }
 ////
 
         for (j = 0; j < Nobjects[POLLUT]; j++)
         {
             x[0] = (float)Node[i].newQual[j];
-            fwrite(&x[0], sizeof(float), 1, Fhotstart2.file);
+            fwrite(&x[0], sizeof(float), 1, hsfile2.file);
         }
     }
     for (i = 0; i < Nobjects[LINK]; i++)
@@ -266,11 +266,11 @@ void  saveRouting()
         x[0] = (float)Link[i].newFlow;
         x[1] = (float)Link[i].newDepth;
         x[2] = (float)Link[i].setting;
-        fwrite(x, sizeof(float), 3, Fhotstart2.file);
+        fwrite(x, sizeof(float), 3, hsfile2.file);
         for (j = 0; j < Nobjects[POLLUT]; j++)
         {
             x[0] = (float)Link[i].newQual[j];
-            fwrite(&x[0], sizeof(float), 1, Fhotstart2.file);
+            fwrite(&x[0], sizeof(float), 1, hsfile2.file);
         }
     }
 }
@@ -369,7 +369,7 @@ void readRouting()
 
 //=============================================================================
 
-void  saveRunoff(void)
+void  saveRunoff(TFile hsfile2)
 //
 //  Input:   none
 //  Output:  none
@@ -378,7 +378,7 @@ void  saveRunoff(void)
 {
     int   i, j, k, sizeX;
     double* x;
-    FILE*  f = Fhotstart2.file;
+    FILE*  f = hsfile2.file;
 
     sizeX = MAX(6, Nobjects[POLLUT]+1);
     x = (double *) calloc(sizeX, sizeof(double));
