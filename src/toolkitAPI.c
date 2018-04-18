@@ -32,10 +32,33 @@ int  stats_getOutfallStat(int index, SM_OutfallStats *outfallStats);
 int  stats_getLinkStat(int index, SM_LinkStats *linkStats);
 int  stats_getPumpStat(int index, SM_PumpStats *pumpStats);
 int  stats_getSubcatchStat(int index, SM_SubcatchStats *subcatchStats);
+void DLLEXPORT save_hotstart(char *s);
+int open_hotstart(TFile hsfile);
 
 //-----------------------------------------------------------------------------
 //  Extended API Functions
 //-----------------------------------------------------------------------------
+
+void DLLEXPORT save_hotstart(char *s)
+//
+// Input:
+// Output:
+// Return:
+// Purpose: save a hotstart file
+{
+
+	TFile Fhotstart_custom;
+        Fhotstart_custom.mode = SAVE_FILE;
+	sstrncpy(Fhotstart_custom.name, s, MAXFNAME);
+	openHotstartFile2(Fhotstart_custom);
+	Fhotstart_custom.file = fopen(Fhotstart_custom.name, "a+b");
+	if (Fhotstart_custom.file){
+		saveRunoff(Fhotstart_custom.file);
+		saveRouting(Fhotstart_custom.file);
+		fclose(Fhotstart_custom.file);
+	}
+}
+
 void DLLEXPORT swmm_getAPIError(int errcode, char *s)
 //
 // Input:   errcode = error code
