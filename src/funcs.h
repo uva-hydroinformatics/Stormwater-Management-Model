@@ -421,6 +421,9 @@ void    iface_saveOutletResults(DateTime reportDate, FILE* file);
 //-----------------------------------------------------------------------------
 int     hotstart_open(void);
 void    hotstart_close(void);
+int  	openHotstartFile2(TFile hsfile2);       
+void 	saveRunoff(FILE* hsfile2);
+void 	saveRouting(FILE* hsfile2);
 
 //-----------------------------------------------------------------------------
 //   Conveyance System Link Methods

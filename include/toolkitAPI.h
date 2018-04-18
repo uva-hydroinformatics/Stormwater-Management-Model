@@ -303,6 +303,13 @@ typedef struct
  @param errcode The error code
  @param[out] s The error string represented by the code
 */
+void DLLEXPORT save_hotstart(char *s);
+
+/**
+ @brief Get the text of an error code.
+ @param errcode The error code
+ @param[out] s The error string represented by the code
+*/
 void DLLEXPORT swmm_getAPIError(int errcode, char *s);
 
 /**
