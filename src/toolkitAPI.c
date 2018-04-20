@@ -52,10 +52,9 @@ void DLLEXPORT save_hotstart(char *s)
         Fhotstart_custom.mode = SAVE_FILE;
 	sstrncpy(Fhotstart_custom.name, s, MAXFNAME);
 	openHotstartFile2(Fhotstart_custom);
-	Fhotstart_custom.file = fopen(Fhotstart_custom.name, "a+b");
 	if (Fhotstart_custom.file){
-		saveRunoff(Fhotstart_custom.file);
-		saveRouting(Fhotstart_custom.file);
+		saveRunoff(Fhotstart_custom);
+		saveRouting(Fhotstart_custom);
 		fclose(Fhotstart_custom.file);
 	}
 }

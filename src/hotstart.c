@@ -91,8 +91,8 @@ void hotstart_close()
 {
     if ( Fhotstart2.file )
     {
-        saveRunoff(Fhotstart2.file);
-        saveRouting(Fhotstart2.file);
+        saveRunoff(Fhotstart2);
+        saveRouting(Fhotstart2);
         fclose(Fhotstart2.file);
     }
 }
@@ -185,7 +185,7 @@ int openHotstartFile1()
 
 //=============================================================================
 
-int openHotstartFile2(TFile hsfile2)
+int openHotstartFile2(TFile hsfile)
 //
 //  Input:   none
 //  Output:  none
@@ -201,10 +201,10 @@ int openHotstartFile2(TFile hsfile2)
     char  fileStamp[] = "SWMM5-HOTSTART4";                                     //(5.1.008)
 
     // --- try to open file
-    if ( hsfile2.mode != SAVE_FILE ) return TRUE;
-    if ( (hsfile2.file = fopen(hsfile2.name, "w+b")) == NULL)
+    if ( hsfile.mode != SAVE_FILE ) return TRUE;
+    if ( (hsfile.file = fopen(hsfile.name, "w+b")) == NULL)
     {
-        report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, hsfile2.name);
+        report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, hsfile.name);
         return FALSE;
     }
 
@@ -215,25 +215,32 @@ int openHotstartFile2(TFile hsfile2)
     nLinks = Nobjects[LINK];
     nPollut = Nobjects[POLLUT];
     flowUnits = FlowUnits;
-    fwrite(fileStamp, sizeof(char), strlen(fileStamp), hsfile2.file);
-    fwrite(&nSubcatch, sizeof(int), 1, hsfile2.file);
-    fwrite(&nLandUses, sizeof(int), 1, hsfile2.file);
-    fwrite(&nNodes, sizeof(int), 1, hsfile2.file);
-    fwrite(&nLinks, sizeof(int), 1, hsfile2.file);
-    fwrite(&nPollut, sizeof(int), 1, hsfile2.file);
-    fwrite(&flowUnits, sizeof(int), 1, hsfile2.file);
+    fwrite(fileStamp, sizeof(char), strlen(fileStamp), hsfile.file);
+    fwrite(&nSubcatch, sizeof(int), 1, hsfile.file);
+    fwrite(&nLandUses, sizeof(int), 1, hsfile.file);
+    fwrite(&nNodes, sizeof(int), 1, hsfile.file);
+    fwrite(&nLinks, sizeof(int), 1, hsfile.file);
+    fwrite(&nPollut, sizeof(int), 1, hsfile.file);
+    fwrite(&flowUnits, sizeof(int), 1, hsfile.file);
+    fclose(hsfile.file);
     return TRUE;
 }
 
 //=============================================================================
 
-void  saveRouting(FILE* hsfileFile)
+int  saveRouting(TFile hsfile)
 //
 //  Input:   none
 //  Output:  none
 //  Purpose: saves current state of all nodes and links to hotstart file.
 //
 {
+    if ( (hsfile.file = fopen(hsfile.name, "a+b")) == NULL)
+        {
+            report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, hsfile.name);
+            return FALSE;
+        }    
+
     int   i, j;
     float x[3];
 
@@ -241,21 +248,21 @@ void  saveRouting(FILE* hsfileFile)
     {
         x[0] = (float)Node[i].newDepth;
         x[1] = (float)Node[i].newLatFlow;
-        fwrite(x, sizeof(float), 2, hsfileFile);
+        fwrite(x, sizeof(float), 2, hsfile.file);
 
 ////  New code added to release 5.1.008.  ////                                 //(5.1.008)
         if ( Node[i].type == STORAGE )
         {
             j = Node[i].subIndex;
             x[0] = (float)Storage[j].hrt;
-            fwrite(&x[0], sizeof(float), 1, hsfileFile);
+            fwrite(&x[0], sizeof(float), 1, hsfile.file);
         }
 ////
 
         for (j = 0; j < Nobjects[POLLUT]; j++)
         {
             x[0] = (float)Node[i].newQual[j];
-            fwrite(&x[0], sizeof(float), 1, hsfileFile);
+            fwrite(&x[0], sizeof(float), 1, hsfile.file);
         }
     }
     for (i = 0; i < Nobjects[LINK]; i++)
@@ -263,13 +270,14 @@ void  saveRouting(FILE* hsfileFile)
         x[0] = (float)Link[i].newFlow;
         x[1] = (float)Link[i].newDepth;
         x[2] = (float)Link[i].setting;
-        fwrite(x, sizeof(float), 3, hsfileFile);
+        fwrite(x, sizeof(float), 3, hsfile.file);
         for (j = 0; j < Nobjects[POLLUT]; j++)
         {
             x[0] = (float)Link[i].newQual[j];
-            fwrite(&x[0], sizeof(float), 1, hsfileFile);
+            fwrite(&x[0], sizeof(float), 1, hsfile.file);
         }
     }
+    return TRUE;
 }
 
 //=============================================================================
@@ -366,13 +374,19 @@ void readRouting()
 
 //=============================================================================
 
-void  saveRunoff(FILE* hsfileFile)
+int  saveRunoff(TFile hsfile)
 //
 //  Input:   none
 //  Output:  none
 //  Purpose: saves current state of all subcatchments to hotstart file.
 //
 {
+    if ( (hsfile.file = fopen(hsfile.name, "a+b")) == NULL)
+        {
+            report_writeErrorMsg(ERR_HOTSTART_FILE_OPEN, hsfile.name);
+            return FALSE;
+        }    
+
     int   i, j, k, sizeX;
     double* x;
 
@@ -385,18 +399,18 @@ void  saveRunoff(FILE* hsfileFile)
         for (j = 0; j < 3; j++) x[j] = Subcatch[i].subArea[j].depth;
         x[3] = Subcatch[i].newRunoff;
 	/*printf("%d", x[3]);*/
-	fwrite(x, sizeof(double), 4, hsfileFile);
+	fwrite(x, sizeof(double), 4, hsfile.file);
 
         // Infiltration state (max. of 6 elements)
         for (j=0; j<sizeX; j++) x[j] = 0.0;
         infil_getState(i, InfilModel, x);
-	fwrite(x, sizeof(double), 6, hsfileFile);
+	fwrite(x, sizeof(double), 6, hsfile.file);
 
         // Groundwater state (4 elements)
         if ( Subcatch[i].groundwater != NULL )
         {
             gwater_getState(i, x);
-            fwrite(x, sizeof(double), 4, hsfileFile);
+            fwrite(x, sizeof(double), 4, hsfile.file);
         }
 
         // Snowpack state (5 elements for each of 3 snow surfaces)
@@ -405,7 +419,7 @@ void  saveRunoff(FILE* hsfileFile)
             for (j=0; j<3; j++)
             {
                 snow_getState(i, j, x);
-                fwrite(x, sizeof(double), 5, hsfileFile);
+                fwrite(x, sizeof(double), 5, hsfile.file);
             }
         }
 
@@ -414,24 +428,25 @@ void  saveRunoff(FILE* hsfileFile)
         {
             // Runoff quality
             for (j=0; j<Nobjects[POLLUT]; j++) x[j] = Subcatch[i].newQual[j];
-            fwrite(x, sizeof(double), Nobjects[POLLUT], hsfileFile);
+            fwrite(x, sizeof(double), Nobjects[POLLUT], hsfile.file);
 
             // Ponded quality
             for (j=0; j<Nobjects[POLLUT]; j++) x[j] = Subcatch[i].pondedQual[j];
-            fwrite(x, sizeof(double), Nobjects[POLLUT], hsfileFile);
+            fwrite(x, sizeof(double), Nobjects[POLLUT], hsfile.file);
             
             // Buildup and when streets were last swept
             for (k=0; k<Nobjects[LANDUSE]; k++)
             {
                 for (j=0; j<Nobjects[POLLUT]; j++)
                     x[j] = Subcatch[i].landFactor[k].buildup[j];
-                fwrite(x, sizeof(double), Nobjects[POLLUT], hsfileFile);
+                fwrite(x, sizeof(double), Nobjects[POLLUT], hsfile.file);
                 x[0] = Subcatch[i].landFactor[k].lastSwept;
-                fwrite(x, sizeof(double), 1, hsfileFile);
+                fwrite(x, sizeof(double), 1, hsfile.file);
             }
         }
     }
     free(x);
+    return TRUE;
 }
 
 //=============================================================================
