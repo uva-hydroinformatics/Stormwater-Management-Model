@@ -89,11 +89,9 @@ int hotstart_open()
 
 void hotstart_close()
 {
-    if ( Fhotstart2.file )
     {
         saveRunoff(Fhotstart2);
         saveRouting(Fhotstart2);
-        fclose(Fhotstart2.file);
     }
 }
 
@@ -277,6 +275,7 @@ int  saveRouting(TFile hsfile)
             fwrite(&x[0], sizeof(float), 1, hsfile.file);
         }
     }
+    fclose(hsfile.file);
     return TRUE;
 }
 
@@ -446,6 +445,7 @@ int  saveRunoff(TFile hsfile)
         }
     }
     free(x);
+    fclose(hsfile.file);
     return TRUE;
 }
 
