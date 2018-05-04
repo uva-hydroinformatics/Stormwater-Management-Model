@@ -33,31 +33,11 @@ int  stats_getOutfallStat(int index, SM_OutfallStats *outfallStats);
 int  stats_getLinkStat(int index, SM_LinkStats *linkStats);
 int  stats_getPumpStat(int index, SM_PumpStats *pumpStats);
 int  stats_getSubcatchStat(int index, SM_SubcatchStats *subcatchStats);
-void DLLEXPORT save_hotstart(char *s);
 int open_hotstart(TFile hsfile);
 
 //-----------------------------------------------------------------------------
 //  Extended API Functions
 //-----------------------------------------------------------------------------
-
-void DLLEXPORT save_hotstart(char *s)
-//
-// Input:
-// Output:
-// Return:
-// Purpose: save a hotstart file
-{
-
-	TFile Fhotstart_custom;
-        Fhotstart_custom.mode = SAVE_FILE;
-	sstrncpy(Fhotstart_custom.name, s, MAXFNAME);
-	openHotstartFile2(Fhotstart_custom);
-	if (Fhotstart_custom.file){
-		saveRunoff(Fhotstart_custom);
-		saveRouting(Fhotstart_custom);
-		fclose(Fhotstart_custom.file);
-	}
-}
 
 void DLLEXPORT swmm_getAPIError(int errcode, char *s)
 //
@@ -1469,3 +1449,28 @@ int DLLEXPORT swmm_setOutfallStage(int index, double stage)
     }
     return(errcode);
 }
+
+void DLLEXPORT save_hotstart(char *hsfile)
+//
+// Input:   hsfile = path of filename to save hotstart data to (e.g., 'myhotstart.hsf')
+// Output:  None
+// Purpose: save a hotstart file at any point in simulation
+{
+	// make a new instance of a TFile struct, Fhotstart_custom
+	TFile Fhotstart_custom;
+	// set the 'mode' attribute of new TFile struct to 'SAVE_FILE' as done in normal run in 
+	// ... iface.c
+        Fhotstart_custom.mode = SAVE_FILE;
+	// set the 'name' attribute of Fhotstart_custom to char array passed as function parameter
+	sstrncpy(Fhotstart_custom.name, hsfile, MAXFNAME);
+	// call openHotstartFile2 from hotstart.c to open custom hotstart file for writing
+	openHotstartFile2(Fhotstart_custom);
+	// check to make sure there is the file
+	if (Fhotstart_custom.file){
+		// write the runoff states to the hotstart file
+		saveRunoff(Fhotstart_custom);
+		// write the routing states to the hotstart file (file is closed in saveRouting)
+		saveRouting(Fhotstart_custom);
+	}
+}
+
