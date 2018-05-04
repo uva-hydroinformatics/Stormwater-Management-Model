@@ -300,12 +300,6 @@ typedef struct
 
 // --- Declare SWMM toolkit API Function
 
-/**
- @brief Get the text of an error code.
- @param errcode The error code
- @param[out] s The error string represented by the code
-*/
-void DLLEXPORT save_hotstart(char *s);
 
 /**
  @brief Get the text of an error code.
@@ -478,6 +472,12 @@ int DLLEXPORT swmm_getSimulationDateTime(int timetype, int *year, int *month,
  @return Error code
 */
 int DLLEXPORT swmm_setSimulationDateTime(int timetype, char *dtimestr);
+
+/**
+ @brief Save hotstart file during simulation
+ @param hsfile The file name of the hotstart file that user would like to save 
+*/
+void DLLEXPORT save_hotstart(char *hsfile);
 
 //-------------------------------
 // Active Simulation Results API
