@@ -1490,6 +1490,7 @@ void DLLEXPORT save_hotstart(char *hsfile)
 // Output:  None
 // Purpose: save a hotstart file at any point in simulation
 {
+	int errcode = 0;
 	// make a new instance of a TFile struct, Fhotstart_custom
 	TFile Fhotstart_custom;
 	// set the 'mode' attribute of new TFile struct to 'SAVE_FILE' as done in normal run in 
