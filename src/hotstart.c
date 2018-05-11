@@ -89,7 +89,7 @@ int hotstart_open()
 
 void hotstart_close()
 {
-    if (Fhotstart2.name)
+    if (Fhotstart2.mode != NO_FILE)
     {
         saveRunoff(Fhotstart2);
         saveRouting(Fhotstart2);
